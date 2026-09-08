@@ -1,0 +1,96 @@
+<div class="work-page">
+  <header class="work-head">
+    <div>
+      <h1>Benim İşlerim</h1>
+      <p class="sub">Sana atanmış işler, projelerden bağımsız ve aciliyet sırasına göre.</p>
+    </div>
+
+    <div class="head-stats" *ngIf="!loading">
+      <span class="stat" [class.warn]="overdueCount > 0">
+        <b>{{ overdueCount }}</b> geciken
+      </span>
+      <span class="stat"><b>{{ todayCount }}</b> bugün</span>
+      <span class="stat"><b>{{ myTasks.length }}</b> açık</span>
+    </div>
+  </header>
+
+  <p class="work-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span><span>Görevler yükleniyor…</span>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <!-- Hiç iş yoksa -->
+    <div class="empty-all" *ngIf="myTasks.length === 0 && completedTasks.length === 0">
+      <span class="empty-icon">✓</span>
+      <h2>Sana atanmış açık iş yok</h2>
+      <p>Ekip lideri sana görev atadığında burada görünecek. Ekibin panosuna göz atabilirsin.</p>
+      <a routerLink="/board" class="btn-primary">Panoya git</a>
+    </div>
+
+    <div class="empty-all" *ngIf="myTasks.length === 0 && completedTasks.length > 0">
+      <span class="empty-icon">🎉</span>
+      <h2>Tüm işlerin tamam</h2>
+      <p>Açık görevin kalmadı. Tamamladıklarını aşağıdan görebilirsin.</p>
+    </div>
+
+    <!-- Gruplar -->
+    <section class="group" *ngFor="let g of groups">
+      <div class="group-head">
+        <span class="group-dot" [class]="'tone-' + g.tone"></span>
+        <h2>{{ g.label }}</h2>
+        <span class="group-count">{{ g.tasks.length }}</span>
+        <span class="group-hint">{{ g.hint }}</span>
+      </div>
+
+      <ul class="task-list">
+        <li *ngFor="let t of g.tasks">
+          <a [routerLink]="['/tasks', t.id]" class="task-row">
+            <span class="row-priority" [style.background]="priorityStyle(t.priority).dot" [title]="priorityLabel(t.priority)"></span>
+
+            <span class="row-main">
+              <span class="row-title">{{ t.title }}</span>
+              <span class="row-sub">
+                <span class="project-tag"
+                      [style.background]="projectStyle(t.projectId).bg"
+                      [style.color]="projectStyle(t.projectId).fg">{{ t.projectName }}</span>
+                <span class="row-status">{{ statusLabel(t.status) }}</span>
+                <span class="row-chip" *ngIf="t.checklistTotal">☑ {{ t.checklistDone }}/{{ t.checklistTotal }}</span>
+                <span class="row-chip" *ngIf="t.commentCount">💬 {{ t.commentCount }}</span>
+                <span class="row-chip" *ngIf="t.attachmentCount">📎 {{ t.attachmentCount }}</span>
+              </span>
+            </span>
+
+            <span class="row-due" [class]="'tone-' + g.tone" *ngIf="t.dueDate">{{ dueLabel(t) }}</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <!-- Tamamlananlar -->
+    <section class="group completed-group" *ngIf="completedTasks.length > 0">
+      <button type="button" class="completed-toggle" (click)="toggleCompleted()">
+        <span class="chevron" [class.open]="showCompleted">›</span>
+        Tamamladıklarım
+        <span class="group-count">{{ completedTasks.length }}</span>
+      </button>
+
+      <ul class="task-list" *ngIf="showCompleted">
+        <li *ngFor="let t of completedTasks">
+          <a [routerLink]="['/tasks', t.id]" class="task-row is-done">
+            <span class="row-priority" style="background:#cbd5e1"></span>
+            <span class="row-main">
+              <span class="row-title">{{ t.title }}</span>
+              <span class="row-sub">
+                <span class="project-tag"
+                      [style.background]="projectStyle(t.projectId).bg"
+                      [style.color]="projectStyle(t.projectId).fg">{{ t.projectName }}</span>
+              </span>
+            </span>
+          </a>
+        </li>
+      </ul>
+    </section>
+  </ng-container>
+</div>

@@ -1,0 +1,362 @@
+* { box-sizing: border-box; }
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+/* .auth-page bir flex konteyner ama tek çocuğu .auth-card. Bu sınıf için hiç kural
+   tanımlanmadığından .auth-card sıradan bir blok kalıyor, dolayısıyla içindeki iki panel
+   flex ÖĞESİ olamıyor ve üzerlerindeki flex: 1 1 45% / 55% hiç çalışmıyordu: paneller alt
+   alta diziliyor, sayfa sola yığılıp sağ taraf boş kalıyordu. Kartı hem esneyen bir öğe
+   hem de kendi içinde flex konteyner yapıyoruz. */
+.auth-card {
+  flex: 1;
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------- SOL PANEL ---------- */
+.auth-brand {
+  flex: 1 1 45%;
+  /* Sınır 560px'ken geniş monitörlerde sol panel ekranın ancak dörtte birini kaplıyor,
+     45/55 dengesi bozulup görsel cılız duruyordu. İçerideki metnin kendi 380px'lik
+     sınırı zaten var, o yüzden paneli daha rahat bırakabiliyoruz. */
+  max-width: 720px;
+  /* Fotoğraf: "Joyful team working together" - Jud Mackrill, Unsplash (ücretsiz lisans) */
+  background:
+    linear-gradient(160deg, rgba(79, 70, 229, 0.88) 0%, rgba(124, 58, 237, 0.85) 55%, rgba(168, 85, 247, 0.82) 100%),
+    url('https://images.unsplash.com/photo-1572021335469-31706a17aaef?fm=jpg&q=70&w=1200&auto=format&fit=crop') center/cover no-repeat;
+  color: white;
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.auth-brand__header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.logo-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: white;
+  flex-shrink: 0;
+}
+
+.auth-brand__content h1 {
+  font-size: 34px;
+  line-height: 1.25;
+  margin: 0 0 16px 0;
+  font-weight: 700;
+}
+
+.auth-brand__content p {
+  font-size: 15px;
+  line-height: 1.6;
+  opacity: 0.9;
+  margin: 0 0 28px 0;
+  max-width: 380px;
+}
+
+.auth-brand__features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-brand__features li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  opacity: 0.95;
+}
+
+.check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.auth-brand__footer {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+/* ---------- SAĞ PANEL ---------- */
+.auth-form-panel {
+  flex: 1 1 55%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-form-panel::before,
+.auth-form-panel::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  opacity: 0.12;
+  z-index: 0;
+}
+
+.auth-form-panel::before {
+  width: 320px;
+  height: 320px;
+  background: #6366f1;
+  top: -80px;
+  right: -80px;
+}
+
+.auth-form-panel::after {
+  width: 260px;
+  height: 260px;
+  background: #a855f7;
+  bottom: -60px;
+  left: -60px;
+}
+
+.auth-form {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+}
+
+.auth-form__badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+.auth-form__badge svg { width: 22px; height: 22px; }
+
+.auth-form__mobile-brand {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: #1a1d29;
+  margin-bottom: 24px;
+}
+.auth-form__mobile-brand .logo-dot {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+}
+
+.auth-form h2 {
+  font-size: 24px;
+  color: #1a1d29;
+  margin: 0 0 6px 0;
+  font-weight: 700;
+}
+
+.auth-form__subtitle {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 28px 0;
+}
+
+.field { margin-bottom: 18px; }
+
+.field__label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.forgot-link {
+  font-size: 12.5px;
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 500;
+}
+.forgot-link:hover { text-decoration: underline; }
+
+.input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  left: 12px;
+  width: 18px;
+  height: 18px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.input-wrap input {
+  width: 100%;
+  padding: 11px 14px 11px 40px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1a1d29;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  outline: none;
+}
+
+.input-wrap input:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.input-wrap input:disabled {
+  background: #f9fafb;
+  opacity: 0.7;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 10px;
+  border: none;
+  background: transparent;
+  color: #6366f1;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+}
+
+.remember-row {
+  margin-bottom: 18px;
+}
+
+.remember-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #4b5563;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: #6366f1;
+  cursor: pointer;
+}
+
+.error-banner {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 4px 0 18px 0;
+}
+
+/* Oturum süresi dolduğunda gösterilen bilgilendirme - hata değil, yönlendirme. */
+.info-banner {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  margin: 4px 0 18px 0;
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.submit-btn:hover:not(:disabled) { opacity: 0.92; }
+.submit-btn:active:not(:disabled) { transform: scale(0.99); }
+.submit-btn:disabled { opacity: 0.7; cursor: not-allowed; }
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.trust-line {
+  text-align: center;
+  font-size: 12.5px;
+  color: #6b7280;
+  margin: 18px 0 6px 0;
+}
+
+.help-line {
+  text-align: center;
+  font-size: 12.5px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.help-line a {
+  color: #6366f1;
+  text-decoration: none;
+  font-weight: 600;
+}
+.help-line a:hover { text-decoration: underline; }
+
+/* ---------- RESPONSIVE: 900px altında sol panel gizlensin ---------- */
+@media (max-width: 900px) {
+  .auth-brand { display: none; }
+  .auth-form-panel { flex: 1 1 100%; }
+  .auth-form__mobile-brand { display: flex; }
+  .auth-form__badge { display: none; }
+}

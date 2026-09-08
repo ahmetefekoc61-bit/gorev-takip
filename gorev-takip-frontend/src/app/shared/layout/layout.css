@@ -1,0 +1,24 @@
+/* Kabuk artık tam ekran yüksekliğinde ve sayfanın kendisi kaymıyor; kaydırmayı içerik
+   alanı üstleniyor. Pano bu sayede kalan yüksekliği tam olarak doldurabiliyor (şeritler
+   kendi içlerinde kayıyor), diğer sayfalar ise eskisi gibi normal kayıyor. */
+.shell {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(180deg, #f7f8fa 0%, #eef0f4 100%);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.shell-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.shell-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}

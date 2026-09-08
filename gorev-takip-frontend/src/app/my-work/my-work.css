@@ -1,0 +1,115 @@
+:host { display: block; }
+
+.work-page { max-width: 940px; margin: 0 auto; padding: 22px 24px 60px; }
+
+.work-head { display: flex; align-items: flex-start; gap: 18px; margin-bottom: 20px; flex-wrap: wrap; }
+.work-head h1 { font-size: 21px; font-weight: 700; color: #111827; letter-spacing: -.3px; margin: 0 0 3px 0; }
+.sub { font-size: 13.5px; color: #6b7280; margin: 0; }
+
+.head-stats { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.stat {
+  background: white; border: 1px solid #e4e7ec; border-radius: 8px;
+  padding: 7px 13px; font-size: 12.5px; color: #6b7280;
+}
+.stat b { color: #111827; font-weight: 700; font-variant-numeric: tabular-nums; }
+.stat.warn { background: #fef2f2; border-color: #fecaca; color: #b91c1c; }
+.stat.warn b { color: #b91c1c; }
+
+.work-error {
+  background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca;
+  border-radius: 8px; padding: 9px 12px; font-size: 13px; margin: 0 0 14px 0;
+}
+
+.loading-state {
+  display: flex; align-items: center; justify-content: center; gap: 11px;
+  padding: 70px 20px; color: #6b7280; font-size: 14px;
+}
+.spinner {
+  width: 20px; height: 20px; border: 2.5px solid #dfe3ea; border-top-color: #6366f1;
+  border-radius: 50%; animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- BOŞ DURUM ---------- */
+.empty-all {
+  background: white; border: 1px solid #e8eaef; border-radius: 12px;
+  padding: 48px 24px; text-align: center;
+}
+.empty-icon { font-size: 30px; display: block; margin-bottom: 10px; }
+.empty-all h2 { font-size: 17px; color: #111827; margin: 0 0 6px 0; }
+.empty-all p { font-size: 13.5px; color: #6b7280; margin: 0 0 16px 0; }
+.btn-primary {
+  display: inline-block; background: linear-gradient(135deg, #6366f1, #7c3aed); color: white;
+  border-radius: 8px; padding: 9px 18px; font-size: 13px; font-weight: 600; text-decoration: none;
+}
+
+/* ---------- GRUPLAR ---------- */
+.group { margin-bottom: 26px; }
+.group-head { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+.group-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.group-head h2 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #3f4756; margin: 0; }
+.group-count {
+  background: #e3e7ee; color: #5b6478; font-size: 11px; font-weight: 700;
+  padding: 1px 7px; border-radius: 9px; font-variant-numeric: tabular-nums;
+}
+.group-hint { font-size: 11.5px; color: #9199b0; margin-left: 2px; }
+
+/* Aciliyet tonu: kırmızıdan griye. Gruplar zaten sıralı olduğu için renk yalnızca
+   pekiştirici - bilgi sıradan ve etiketten de okunuyor. */
+.tone-overdue { background: #dc2626; }
+.tone-today   { background: #ea580c; }
+.tone-week    { background: #2563eb; }
+.tone-later   { background: #64748b; }
+.tone-none    { background: #cbd5e1; }
+
+.task-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.task-row {
+  display: flex; align-items: center; gap: 11px;
+  background: white; border: 1px solid #e8eaef; border-radius: 10px;
+  padding: 11px 14px; text-decoration: none;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.task-row:hover { border-color: #c7cdd8; box-shadow: 0 2px 8px rgba(16,24,40,.07); }
+.task-row.is-done { opacity: .62; }
+.task-row.is-done .row-title { text-decoration: line-through; color: #6b7280; }
+
+.row-priority { width: 4px; height: 30px; border-radius: 3px; flex-shrink: 0; }
+
+.row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.row-title { font-size: 14px; font-weight: 600; color: #111827; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-sub { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+
+.project-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 5px;
+}
+.row-status { font-size: 11.5px; color: #6b7280; }
+.row-chip { font-size: 11.5px; color: #8b93a5; }
+
+.row-due {
+  font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 6px;
+  color: white; flex-shrink: 0; white-space: nowrap;
+}
+.row-due.tone-none, .row-due.tone-later { background: #eef0f4; color: #6b7280; }
+
+/* ---------- TAMAMLANANLAR ---------- */
+.completed-group { margin-top: 34px; }
+.completed-toggle {
+  display: flex; align-items: center; gap: 9px; background: none; border: none;
+  font-family: inherit; font-size: 13px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: .5px; color: #6b7280; cursor: pointer; padding: 6px 0; margin-bottom: 6px;
+}
+.completed-toggle:hover { color: #374151; }
+.chevron { display: inline-block; font-size: 17px; line-height: 1; transition: transform .18s ease; }
+.chevron.open { transform: rotate(90deg); }
+
+@media (max-width: 640px) {
+  .work-page { padding: 16px; }
+  .head-stats { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner { animation: none; }
+  .task-row, .chevron { transition: none; }
+}

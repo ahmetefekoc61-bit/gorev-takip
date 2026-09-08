@@ -1,0 +1,12 @@
+# Derleme çıktıları ve yerel dosyalar imaja girmesin.
+bin/
+obj/
+.vs/
+*.user
+
+# Yerel geliştirme ayarları sunucuda kullanılmıyor.
+appsettings.Development.json
+
+# Yerelde yüklenmiş dosyalar.
+App_Data/
+wwwroot/avatars/

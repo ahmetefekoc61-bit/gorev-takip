@@ -1,0 +1,226 @@
+<div class="board-page">
+
+  <!-- Başlık: özet artık üç ayrı kutu değil tek satır; boşalan sağ üst köşe
+       sayfanın birincil eylemine (Yeni Görev) ayrıldı. -->
+  <header class="board-header">
+    <h1>Pano</h1>
+
+    <div class="board-summary" *ngIf="!loading">
+      <span><strong>{{ totalTasks }}</strong> görev</span>
+      <span class="sep">·</span>
+      <span><strong>{{ doneTasks.length }}</strong> tamamlandı</span>
+      <span class="mini-track"><i [style.width.%]="completionRate"></i></span>
+      <span class="mini-pct">%{{ completionRate }}</span>
+    </div>
+
+    <button type="button" class="new-task-btn" *ngIf="canManageTasks" (click)="openAddModal('todo')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+      Yeni Görev
+    </button>
+  </header>
+
+  <!-- Ekibe atanmamış kullanıcı: pano zaten boş gelecek, sebebini ve çıkış yolunu söylüyoruz. -->
+  <div class="no-team" *ngIf="!loading && hasNoTeam">
+    <span class="no-team-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+        <circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="9" r="2.6"/>
+        <path d="M3 20c.5-3.6 3-5.6 6-5.6s5.5 2 6 5.6"/><path d="M15 15c2 .2 3.7 2 4 5"/>
+      </svg>
+    </span>
+    <h2>Henüz bir ekipte değilsin</h2>
+    <p>
+      Görevler ekipler üzerinden dağıtılıyor. Bir ekibe eklenene kadar pano boş kalır.
+      Ekip liderin ya da yöneticin seni <strong>Ekipler</strong> sayfasından ekibine alabilir.
+    </p>
+    <div class="no-team-actions">
+      <a routerLink="/teams" class="btn-primary">Ekipleri gör</a>
+      <span class="no-team-hint">Eklendikten sonra bu sayfayı yenilemen yeterli.</span>
+    </div>
+  </div>
+
+  <!-- Filtre satırı: görev sayısı arttığında panoyu kullanılabilir kılan asıl kısım. -->
+  <div class="filter-bar" *ngIf="!loading && !hasNoTeam">
+    <button type="button" class="filter-toggle" [class.active]="onlyMine" (click)="toggleOnlyMine()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg>
+      Bana atananlar
+    </button>
+
+    <span class="filter-sep"></span>
+
+    <select class="filter-select" [(ngModel)]="projectFilter" (ngModelChange)="onFilterChange()">
+      <option [ngValue]="null">Tüm projeler</option>
+      <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+    </select>
+
+    <select class="filter-select" [(ngModel)]="assigneeFilter" (ngModelChange)="onFilterChange()">
+      <option [ngValue]="null">Herkes</option>
+      <option *ngFor="let m of members" [ngValue]="m.id">{{ m.fullName }}</option>
+    </select>
+
+    <select class="filter-select" [(ngModel)]="priorityFilter" (ngModelChange)="onFilterChange()">
+      <option [ngValue]="null">Tüm öncelikler</option>
+      <option *ngFor="let p of priorities" [ngValue]="p">{{ priorityLabel(p) }}</option>
+    </select>
+
+    <button type="button" class="filter-clear" *ngIf="hasActiveFilters" (click)="clearFilters()">
+      Filtreleri temizle
+    </button>
+
+    <span class="filter-result" *ngIf="hasActiveFilters">{{ visibleTotal }} / {{ totalTasks }} görev</span>
+
+    <button type="button" class="filter-toggle archive-toggle" [class.active]="showArchived" (click)="toggleArchived()"
+            title="30 günden eski tamamlanmış görevleri göster">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>
+      Arşiv
+    </button>
+  </div>
+
+  <p class="reorder-hint" *ngIf="reorderHint">{{ reorderHint }}</p>
+
+  <p class="board-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <!-- Sütunlar artık kalan yüksekliği kaplayan şeritler; her biri kendi içinde kayıyor. -->
+  <main class="board" *ngIf="!loading && !hasNoTeam; else loadingState">
+    <section class="lane" *ngFor="let col of columns">
+      <div class="lane-head">
+        <span class="lane-dot" [style.background]="col.color"></span>
+        <h2>{{ col.label }}</h2>
+        <span class="lane-count">{{ visibleFor(col.key).length }}</span>
+        <button
+          *ngIf="canManageTasks"
+          type="button"
+          class="lane-add"
+          (click)="openAddModal(col.key)"
+          [attr.aria-label]="col.label + ' sütununa görev ekle'">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+      <div class="lane-rule" [style.background]="col.color"></div>
+
+      <div
+        class="lane-body"
+        cdkDropList
+        [id]="col.listId"
+        [cdkDropListData]="visibleFor(col.key)"
+        [cdkDropListConnectedTo]="col.connectedTo"
+        (cdkDropListDropped)="drop($event, col.key)">
+
+        <article
+          class="card"
+          *ngFor="let task of visibleFor(col.key)"
+          cdkDrag
+          [cdkDragData]="task"
+          [cdkDragDisabled]="!canDrag(task)"
+          [class.is-done]="col.key === 'done'"
+          (click)="openEditModal(task)">
+
+          <!-- Üst satır: solda proje etiketi, sağda atanan kişi. Avatarın sağda sabit
+               durması, gözün tek dikey hat boyunca "kim, kim, kim" diye tarayabilmesi için. -->
+          <div class="card-top">
+            <span
+              class="project-tag"
+              *ngIf="task.projectName"
+              [style.background]="projectStyle(task.projectId).bg"
+              [style.color]="projectStyle(task.projectId).fg">{{ task.projectName }}</span>
+
+            <span class="assignee" *ngIf="task.assignedToId != null" [title]="task.assignedToFullName || ''">
+              <img *ngIf="assigneeAvatar(task) as src" [src]="src" alt="" />
+              <span
+                *ngIf="!assigneeAvatar(task)"
+                class="assignee-fallback"
+                [style.background]="avatarColor(task.assignedToId)">{{ initials(task.assignedToFullName) }}</span>
+            </span>
+            <span class="assignee assignee-empty" *ngIf="task.assignedToId == null" title="Atanmamış">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.4"/><path d="M5 20c.6-3.8 3.4-6 7-6s6.4 2.2 7 6"/></svg>
+            </span>
+          </div>
+
+          <h3 class="card-title">
+            {{ task.title }}
+            <a
+              class="open-detail"
+              [routerLink]="['/tasks', task.id]"
+              (click)="$event.stopPropagation()"
+              title="Görev sayfasında aç"
+              aria-label="Görev sayfasında aç">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6"/><path d="M20 4l-8.5 8.5"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>
+            </a>
+          </h3>
+          <p class="card-desc" *ngIf="task.description">{{ task.description }}</p>
+
+          <!-- Kontrol listesi ilerlemesi: görevin ne kadarının bittiği kartta görünsün. -->
+          <div class="card-check" *ngIf="task.checklistTotal">
+            <span class="check-bar"><i [style.width.%]="(task.checklistDone || 0) / task.checklistTotal * 100"></i></span>
+            <span class="check-text">{{ task.checklistDone }}/{{ task.checklistTotal }}</span>
+          </div>
+
+          <div class="card-meta">
+            <span
+              class="priority"
+              [style.background]="priorityStyle(task.priority).bg"
+              [style.color]="priorityStyle(task.priority).fg">
+              <i [style.background]="priorityStyle(task.priority).dot"></i>{{ priorityLabel(task.priority) }}
+            </span>
+
+            <span
+              class="meta-chip"
+              *ngIf="task.dueDate"
+              [class.overdue]="isOverdue(task)"
+              [class.due-soon]="isDueSoon(task)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 11h18"/></svg>
+              {{ dueLabel(task) }}
+            </span>
+
+            <span class="meta-chip" *ngIf="task.commentCount" [title]="task.commentCount + ' yorum'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              {{ task.commentCount }}
+            </span>
+
+            <span class="meta-chip" *ngIf="task.attachmentCount" [title]="task.attachmentCount + ' dosya'">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.05 12.25 20.2a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 1 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.48-8.49"/></svg>
+              {{ task.attachmentCount }}
+            </span>
+          </div>
+        </article>
+
+        <!-- Tek öğe üç iş yapıyor: bırakma hedefi, boş sütun mesajı ve hızlı ekleme. -->
+        <button
+          type="button"
+          class="drop-zone"
+          [class.filtered]="visibleFor(col.key).length === 0 && tasksFor(col.key).length > 0"
+          [disabled]="!canManageTasks"
+          (click)="openAddModal(col.key)">
+          <ng-container *ngIf="visibleFor(col.key).length === 0 && tasksFor(col.key).length > 0; else dropHint">
+            Filtreyle eşleşen görev yok
+          </ng-container>
+          <ng-template #dropHint>
+            <span *ngIf="canManageTasks">+ Buraya sürükle veya görev ekle</span>
+            <span *ngIf="!canManageTasks">Buraya sürükle</span>
+          </ng-template>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <ng-template #loadingState>
+    <div class="board" *ngIf="loading">
+      <section class="lane" *ngFor="let col of columns">
+        <div class="lane-head">
+          <span class="lane-dot" [style.background]="col.color"></span>
+          <h2>{{ col.label }}</h2>
+        </div>
+        <div class="lane-rule" [style.background]="col.color"></div>
+        <div class="lane-body">
+          <div class="skeleton-card" *ngFor="let i of [1, 2]"></div>
+        </div>
+      </section>
+    </div>
+  </ng-template>
+
+  <app-task-modal
+    *ngIf="modalOpen"
+    [task]="editingTask"
+    [initialStatus]="modalInitialStatus"
+    (closed)="onModalClosed($event)"
+  ></app-task-modal>
+</div>

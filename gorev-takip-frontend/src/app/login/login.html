@@ -1,0 +1,114 @@
+<div class="auth-page">
+ <div class="auth-card">
+  <!-- SOL PANEL: marka / tanıtım (mobilde gizlenecek) -->
+  <aside class="auth-brand">
+    <div class="auth-brand__header">
+      <span class="logo-dot"></span>
+      <span class="auth-brand__name">Görev Takip</span>
+    </div>
+
+    <div class="auth-brand__content">
+      <h1>Ekibinizin işlerini<br />tek yerden yönetin</h1>
+      <p>Kanban board, ekip bazlı görev takibi ve gerçek zamanlı işbirliği tek platformda.</p>
+
+      <ul class="auth-brand__features">
+        <li><span class="check">✓</span> Sürükle-bırak Kanban board</li>
+        <li><span class="check">✓</span> Ekip bazlı yetkilendirme</li>
+        <li><span class="check">✓</span> Rol tabanlı erişim kontrolü</li>
+      </ul>
+    </div>
+
+    <div class="auth-brand__footer">© 2026 Görev Takip</div>
+  </aside>
+
+  <!-- SAĞ PANEL: giriş formu -->
+  <main class="auth-form-panel">
+    <form class="auth-form" (ngSubmit)="onSubmit()" novalidate>
+      <div class="auth-form__badge">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="5" y="10.5" width="14" height="9" rx="2" />
+          <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
+        </svg>
+      </div>
+
+      <!-- Mobilde sol panel gizlenince burada küçük logo görünsün -->
+      <div class="auth-form__mobile-brand">
+        <span class="logo-dot"></span>
+        <span>Görev Takip</span>
+      </div>
+
+      <h2>Tekrar hoş geldiniz</h2>
+      <p class="auth-form__subtitle">Devam etmek için hesabınıza giriş yapın</p>
+
+      <div class="field">
+        <label for="email">E-posta</label>
+        <div class="input-wrap">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5v-11Z" />
+            <path d="m4 6.5 8 6.2 8-6.2" />
+          </svg>
+          <input
+            id="email"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            required
+            autocomplete="username"
+            placeholder="ornek@sirket.com"
+            [disabled]="loading"
+          />
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field__label-row">
+          <label for="password">Şifre</label>
+          <a class="forgot-link" routerLink="/forgot-password">Şifremi unuttum</a>
+        </div>
+        <div class="input-wrap">
+          <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="5" y="10.5" width="14" height="9" rx="2" />
+            <path d="M8 10.5V7.5a4 4 0 0 1 8 0v3" />
+          </svg>
+          <input
+            id="password"
+            [type]="showPassword ? 'text' : 'password'"
+            [(ngModel)]="password"
+            name="password"
+            required
+            autocomplete="current-password"
+            placeholder="••••••••"
+            [disabled]="loading"
+          />
+          <button
+            type="button"
+            class="toggle-password"
+            (click)="showPassword = !showPassword"
+            [attr.aria-label]="showPassword ? 'Şifreyi gizle' : 'Şifreyi göster'"
+          >
+            {{ showPassword ? 'Gizle' : 'Göster' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="remember-row">
+        <label class="remember-check">
+          <input type="checkbox" [(ngModel)]="rememberMe" name="rememberMe" [disabled]="loading" />
+          <span>Beni hatırla</span>
+        </label>
+      </div>
+
+      <p class="error-banner" *ngIf="errorMessage">{{ errorMessage }}</p>
+      <p class="info-banner" *ngIf="infoMessage">{{ infoMessage }}</p>
+
+      <button type="submit" class="submit-btn" [disabled]="loading">
+        <span *ngIf="!loading">Giriş Yap</span>
+        <span *ngIf="loading" class="spinner" aria-label="Yükleniyor"></span>
+      </button>
+
+      <p class="trust-line">🔒 Bilgileriniz uçtan uca şifrelenerek saklanır</p>
+      <p class="help-line">Hesabınıza erişemiyor musunuz? <a href="mailto:destek@gorevtakip.com">Destek ekibiyle iletişime geçin</a></p>
+    </form>
+  </main>
+ </div>
+</div>

@@ -1,0 +1,190 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Ekipler</h1>
+      <p class="page-subtitle">Ekipleri ve üyelerin rollerini yönetin.</p>
+    </div>
+
+    <form *ngIf="authService.isAdmin()" class="new-team-form" (ngSubmit)="createTeam()">
+      <input
+        type="text"
+        [(ngModel)]="newTeamName"
+        name="newTeamName"
+        placeholder="Yeni ekip adı"
+        [disabled]="creating"
+      />
+      <button type="submit" [disabled]="creating || !newTeamName.trim()">
+        {{ creating ? 'Ekleniyor...' : '+ Ekip Ekle' }}
+      </button>
+    </form>
+  </div>
+
+  <p class="banner error" *ngIf="errorMessage">{{ errorMessage }}</p>
+  <p class="banner success" *ngIf="successMessage">{{ successMessage }}</p>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span>
+    <span>Yükleniyor...</span>
+  </div>
+
+  <div class="teams-grid" *ngIf="!loading">
+    <section class="team-card" *ngFor="let group of filteredTeamGroups">
+      <div class="team-card-header">
+        <ng-container *ngIf="editingTeamId !== group.team.id; else editingName">
+          <div class="team-name-wrap">
+            <h2>{{ group.team.name }}</h2>
+            <button
+              *ngIf="authService.isAdmin()"
+              type="button"
+              class="icon-btn edit"
+              (click)="startEditTeam(group.team)"
+              aria-label="Ekip adını düzenle"
+            >✎</button>
+          </div>
+        </ng-container>
+        <ng-template #editingName>
+          <form class="team-name-edit-form" (ngSubmit)="saveTeamName(group.team)">
+            <input
+              type="text"
+              [(ngModel)]="editingTeamName"
+              name="editingTeamName"
+              [disabled]="savingTeamName"
+            />
+            <button type="submit" class="icon-btn save" [disabled]="savingTeamName" aria-label="Kaydet">✓</button>
+            <button type="button" class="icon-btn cancel" (click)="cancelEditTeam()" [disabled]="savingTeamName" aria-label="Vazgeç">✕</button>
+          </form>
+        </ng-template>
+
+        <div class="team-card-header-right">
+          <span class="count">{{ group.members.length }} üye</span>
+          <button
+            *ngIf="authService.isAdmin()"
+            type="button"
+            class="icon-btn danger"
+            (click)="deleteTeam(group.team)"
+            aria-label="Ekibi sil"
+          >&times;</button>
+        </div>
+      </div>
+
+      <ul class="member-list" *ngIf="group.members.length > 0; else noMembers">
+        <li class="member-row" *ngFor="let user of group.members">
+          <div
+            class="avatar-wrap"
+            [class.editable]="authService.isAdmin()"
+            (click)="authService.isAdmin() && fileInput.click()"
+          >
+            <img *ngIf="avatarUrl(user) as src" [src]="src" class="user-avatar-img" alt="" />
+            <span *ngIf="!avatarUrl(user)" class="user-avatar">{{ initials(user.fullName) }}</span>
+            <span class="avatar-edit-badge" *ngIf="authService.isAdmin()">
+              {{ uploadingUserId === user.id ? '…' : '📷' }}
+            </span>
+            <input
+              #fileInput
+              type="file"
+              accept="image/*"
+              class="avatar-file-input"
+              (click)="$event.stopPropagation()"
+              (change)="onAvatarSelected(user, $event)"
+            />
+          </div>
+          <div class="member-meta">
+            <span class="member-name">{{ user.fullName }}</span>
+            <span class="member-email">{{ user.email }}</span>
+          </div>
+
+          <ng-container *ngIf="authService.isAdmin()">
+            <select
+              class="role-select"
+              [ngModel]="user.role"
+              (ngModelChange)="changeRole(user, $event)"
+            >
+              <option *ngFor="let r of roles" [value]="r.value">{{ r.label }}</option>
+            </select>
+
+            <select
+              class="role-select"
+              [ngModel]="user.teamId"
+              (ngModelChange)="changeTeam(user, $event)"
+            >
+              <option [ngValue]="null">Ekipten Çıkar</option>
+              <option *ngFor="let g of teamGroups" [ngValue]="g.team.id">{{ g.team.name }}</option>
+            </select>
+          </ng-container>
+
+          <ng-container *ngIf="!authService.isAdmin()">
+            <span class="role-badge">{{ roleLabel(user.role) }}</span>
+
+            <select
+              *ngIf="isTeamLeader && canManageMembership(user)"
+              class="role-select"
+              [ngModel]="user.teamId"
+              (ngModelChange)="changeTeam(user, $event)"
+            >
+              <option [ngValue]="null">Ekipten Çıkar</option>
+              <option [ngValue]="myTeamId">Ekibime Al</option>
+            </select>
+          </ng-container>
+        </li>
+      </ul>
+      <ng-template #noMembers>
+        <p class="empty-note">Bu ekipte henüz üye yok.</p>
+      </ng-template>
+    </section>
+
+    <p class="empty-note" *ngIf="teamGroups.length === 0">Henüz ekip yok.</p>
+    <p class="empty-note" *ngIf="teamGroups.length > 0 && filteredTeamGroups.length === 0">Aramanla eşleşen ekip bulunamadı.</p>
+  </div>
+
+  <section class="team-card unassigned" *ngIf="!loading && (authService.isAdmin() || isTeamLeader) && unassignedUsers.length > 0">
+    <div class="team-card-header">
+      <h2>Ekibi Olmayanlar</h2>
+      <span class="count">{{ unassignedUsers.length }}</span>
+    </div>
+    <ul class="member-list">
+      <li class="member-row" *ngFor="let user of unassignedUsers">
+        <div
+          class="avatar-wrap"
+          [class.editable]="authService.isAdmin()"
+          (click)="authService.isAdmin() && fileInput.click()"
+        >
+          <img *ngIf="avatarUrl(user) as src" [src]="src" class="user-avatar-img" alt="" />
+          <span *ngIf="!avatarUrl(user)" class="user-avatar">{{ initials(user.fullName) }}</span>
+          <span class="avatar-edit-badge" *ngIf="authService.isAdmin()">
+            {{ uploadingUserId === user.id ? '…' : '📷' }}
+          </span>
+          <input
+            #fileInput
+            type="file"
+            accept="image/*"
+            class="avatar-file-input"
+            (click)="$event.stopPropagation()"
+            (change)="onAvatarSelected(user, $event)"
+          />
+        </div>
+        <div class="member-meta">
+          <span class="member-name">{{ user.fullName }}</span>
+          <span class="member-email">{{ user.email }}</span>
+        </div>
+        <select
+          *ngIf="authService.isAdmin()"
+          class="role-select"
+          [ngModel]="null"
+          (ngModelChange)="changeTeam(user, $event)"
+        >
+          <option [ngValue]="null" disabled>Ekip seç...</option>
+          <option *ngFor="let group of teamGroups" [ngValue]="group.team.id">{{ group.team.name }}</option>
+        </select>
+
+        <button
+          *ngIf="!authService.isAdmin() && isTeamLeader"
+          type="button"
+          class="add-to-team-btn"
+          (click)="changeTeam(user, myTeamId)"
+        >
+          + Ekibime Al
+        </button>
+      </li>
+    </ul>
+  </section>
+</div>

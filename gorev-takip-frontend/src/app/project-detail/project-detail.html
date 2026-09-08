@@ -1,0 +1,83 @@
+<div class="page">
+  <a routerLink="/projects" class="back-link">← Projelere Dön</a>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span>
+    <span>Yükleniyor...</span>
+  </div>
+
+  <p class="banner error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <ng-container *ngIf="!loading && project">
+    <div class="page-header">
+      <div>
+        <h1>{{ project.name }}</h1>
+        <p class="page-subtitle">{{ teamName }} ekibine ait proje</p>
+      </div>
+    </div>
+
+    <div class="progress-panel">
+      <div class="donut-wrap">
+        <svg viewBox="0 0 100 100" class="donut">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#eef0f4" stroke-width="10"></circle>
+          <circle
+            cx="50" cy="50" r="45" fill="none" stroke="#22c55e" stroke-width="10"
+            stroke-linecap="round"
+            [attr.stroke-dasharray]="dashArray(completionRate)"
+            transform="rotate(-90 50 50)"
+          ></circle>
+        </svg>
+        <div class="donut-center">
+          <span class="donut-value">%{{ completionRate }}</span>
+          <span class="donut-label">Tamamlandı</span>
+        </div>
+      </div>
+
+      <div class="progress-stats">
+        <div class="stat-tile">
+          <span class="stat-tile-value">{{ total }}</span>
+          <span class="stat-tile-label">Toplam Görev</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-tile-value">{{ todoCount }}</span>
+          <span class="stat-tile-label">Yapılacak</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-tile-value">{{ inProgressCount }}</span>
+          <span class="stat-tile-label">Devam Ediyor</span>
+        </div>
+        <div class="stat-tile">
+          <span class="stat-tile-value">{{ doneCount }}</span>
+          <span class="stat-tile-label">Tamamlandı</span>
+        </div>
+        <div class="stat-tile" [class.warn]="overdueCount > 0">
+          <span class="stat-tile-value">{{ overdueCount }}</span>
+          <span class="stat-tile-label">Geciken</span>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Görevler</h2>
+
+    <div class="task-list" *ngIf="tasks.length > 0; else noTasks">
+      <div class="task-row" *ngFor="let task of tasks" (click)="openTask(task)">
+        <span class="status-dot" [class]="'status-' + task.status"></span>
+        <div class="task-row-main">
+          <span class="task-row-title">{{ task.title }}</span>
+          <span class="task-row-sub">{{ statusLabel(task.status) }}</span>
+        </div>
+        <span class="priority-badge" [class]="'priority-' + task.priority.toLowerCase()">{{ priorityLabel(task.priority) }}</span>
+        <span class="due-chip" *ngIf="task.dueDate" [class.overdue]="isOverdue(task)">{{ task.dueDate | date: 'd MMM' }}</span>
+      </div>
+    </div>
+    <ng-template #noTasks>
+      <p class="empty-note">Bu projede henüz görev yok.</p>
+    </ng-template>
+  </ng-container>
+
+  <app-task-modal
+    *ngIf="modalOpen"
+    [task]="editingTask"
+    (closed)="onModalClosed($event)"
+  ></app-task-modal>
+</div>

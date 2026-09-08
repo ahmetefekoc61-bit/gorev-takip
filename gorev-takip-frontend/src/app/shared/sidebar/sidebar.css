@@ -1,0 +1,307 @@
+/* Angular bileşen host'u (<app-sidebar>) varsayılan olarak "inline" - flexbox içinde
+   otomatik "blockify" edilse de kendi içindeki .sidebar %100 yükseklik alamıyordu, bu
+   yüzden uzun sayfalarda (çok üyeli ekip, çok proje vb.) kaydırınca sidebar sayfanın
+   ortasında bitip altında açık renkli boşluk görünüyordu. "display: contents" ile host
+   kutusunu tamamen ortadan kaldırıp .sidebar'ı .shell'in doğrudan flex öğesi yapıyoruz. */
+:host {
+  display: contents;
+}
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: #1a1d29;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  padding: 6px 10px 26px 10px;
+}
+
+.logo-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  flex-shrink: 0;
+}
+
+/* Menü artık kalan boşluğu yutmuyor. Önceden flex:1 olduğu için "Ekibim" paneli
+   ekranın en altına itiliyordu ve menü ile arasında yarım ekranlık bir boşluk kalıp
+   panel sayfadan kopuk duruyordu. Esneyen boşluk artık footer'ın üstünde. */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.nav-section-label {
+  color: #5b6178;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  padding: 16px 12px 6px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav-section-label:first-child {
+  padding-top: 4px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: #a6acbe;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 500;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: white;
+  font-size: 10.5px;
+  font-weight: 700;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: #232837;
+  color: #e5e7eb;
+}
+
+.nav-item.active {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(124, 58, 237, 0.18));
+  color: white;
+  box-shadow: inset 3px 0 0 #7c3aed;
+}
+
+.team-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  flex-shrink: 0;
+}
+
+.team-panel-card {
+  background: #20242f;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.team-avatar-stack {
+  display: flex;
+  align-items: center;
+}
+
+.stack-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #20242f;
+  margin-left: -8px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.stack-avatar:first-child {
+  margin-left: 0;
+}
+
+.stack-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.stack-avatar-fallback {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: white;
+  font-size: 9.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stack-avatar-more {
+  background: #353b4d;
+  color: #c3c7d3;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.team-panel-empty {
+  color: #7c839a;
+  font-size: 11.5px;
+  margin: 0;
+}
+
+.team-progress {
+  margin-top: 12px;
+}
+
+.team-progress-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #9199b0;
+  margin-bottom: 6px;
+}
+
+.team-progress-pct {
+  color: #e5e7eb;
+  font-weight: 700;
+}
+
+.team-progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: #353b4d;
+  overflow: hidden;
+}
+
+.team-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+  transition: width 0.3s ease;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #2a2f3d;
+  padding-top: 14px;
+  /* Esneyen boşluk burada: menü ve ekip paneli üstte toplanıyor, kullanıcı kartı altta. */
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background 0.15s ease;
+}
+
+.user-chip:hover {
+  background: #20242f;
+}
+
+.user-chip:hover .logout-btn {
+  opacity: 1;
+}
+
+.logout-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  color: #7c839a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
+}
+
+.logout-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.logout-btn:hover {
+  background: #2a2f3d;
+  color: #f87171;
+}
+
+.user-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #6366f1, #7c3aed);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-avatar-img {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  display: block;
+}
+
+.user-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.user-name {
+  color: #e5e7eb;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  color: #7c839a;
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

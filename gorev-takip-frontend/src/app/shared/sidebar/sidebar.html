@@ -1,0 +1,99 @@
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <span class="logo-dot"></span>
+    <span class="brand-text">Görev Takip</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <span class="nav-section-label">Genel Bakış</span>
+    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="12" width="4" height="8" rx="1"/>
+        <rect x="10" y="7" width="4" height="13" rx="1"/>
+        <rect x="17" y="3" width="4" height="17" rx="1"/>
+      </svg>
+      <span>Dashboard</span>
+    </a>
+    <a routerLink="/board" routerLinkActive="active" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <rect x="3" y="4" width="7" height="16" rx="1.5"/>
+        <rect x="14" y="4" width="7" height="9" rx="1.5"/>
+        <rect x="14" y="16" width="7" height="4" rx="1.5"/>
+      </svg>
+      <span>Pano</span>
+      <span class="nav-badge" *ngIf="myOpenTaskCount > 0">{{ myOpenTaskCount }}</span>
+    </a>
+
+    <a routerLink="/my-work" routerLinkActive="active" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M9 11l2.5 2.5L16 9"/>
+        <rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/>
+        <path d="M8 2.5v4M16 2.5v4"/>
+      </svg>
+      <span>Benim İşlerim</span>
+      <span class="nav-badge" *ngIf="myOverdueCount > 0">{{ myOverdueCount }}</span>
+    </a>
+
+    <span class="nav-section-label">Çalışma Alanı</span>
+    <a routerLink="/projects" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: false }" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+      </svg>
+      <span>Projeler</span>
+    </a>
+    <a routerLink="/teams" routerLinkActive="active" class="nav-item">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <circle cx="8" cy="8" r="3"/>
+        <circle cx="17" cy="9" r="2.5"/>
+        <path d="M2.5 20c.5-3.5 3-5.5 5.5-5.5s5 2 5.5 5.5"/>
+        <path d="M14.5 15c2 .2 3.7 2 4 5"/>
+      </svg>
+      <span>Ekipler</span>
+    </a>
+  </nav>
+
+  <div class="team-panel" *ngIf="teamName">
+    <span class="nav-section-label">Ekibim · {{ teamName }}</span>
+    <div class="team-panel-card">
+      <div class="team-avatar-stack" *ngIf="teammates.length > 0">
+        <span class="stack-avatar" *ngFor="let m of visibleTeammates" [title]="m.fullName">
+          <img *ngIf="avatarUrl(m) as src" [src]="src" alt="" />
+          <span *ngIf="!avatarUrl(m)" class="stack-avatar-fallback">{{ initials(m.fullName) }}</span>
+        </span>
+        <span class="stack-avatar stack-avatar-more" *ngIf="extraTeammateCount > 0">+{{ extraTeammateCount }}</span>
+      </div>
+      <p class="team-panel-empty" *ngIf="teammates.length === 0">Ekibinde henüz başka üye yok.</p>
+
+      <div class="team-progress">
+        <div class="team-progress-header">
+          <span>Ekip Tamamlanma</span>
+          <span class="team-progress-pct">%{{ teamCompletionRate }}</span>
+        </div>
+        <div class="team-progress-track">
+          <div class="team-progress-fill" [style.width.%]="teamCompletionRate"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-footer" *ngIf="currentUser as u">
+    <div class="user-chip">
+      <img *ngIf="avatarUrl(u) as src" [src]="src" class="user-avatar-img" alt="" />
+      <span *ngIf="!avatarUrl(u)" class="user-avatar">{{ initials(u.fullName) }}</span>
+      <div class="user-meta">
+        <span class="user-name">{{ u.fullName }}</span>
+        <span class="user-role">
+          {{ roleLabel(u.role) }}
+          <ng-container *ngIf="teamName">· {{ teamName }}</ng-container>
+        </span>
+      </div>
+      <button type="button" class="logout-btn" (click)="logout()" aria-label="Çıkış yap" title="Çıkış yap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <path d="M16 17l5-5-5-5"/>
+          <path d="M21 12H9"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</aside>

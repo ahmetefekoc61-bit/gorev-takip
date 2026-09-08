@@ -1,0 +1,242 @@
+<div class="detail-page">
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span><span>Görev yükleniyor…</span>
+  </div>
+
+  <div class="not-found" *ngIf="!loading && notFound">
+    <h2>Görev bulunamadı</h2>
+    <p>Bu görev silinmiş olabilir ya da görüntüleme yetkiniz olmayabilir.</p>
+    <a routerLink="/board" class="btn-primary">Panoya dön</a>
+  </div>
+
+  <ng-container *ngIf="!loading && task as t">
+    <header class="detail-head">
+      <a routerLink="/board" class="back-link" aria-label="Panoya dön">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg>
+        Pano
+      </a>
+      <span class="crumb-sep">/</span>
+      <a [routerLink]="['/projects', t.projectId]" class="crumb-project">{{ t.projectName }}</a>
+
+      <div class="head-actions">
+        <button type="button" class="btn-ghost" (click)="copyLink()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+          {{ linkCopied ? 'Kopyalandı' : 'Bağlantıyı kopyala' }}
+        </button>
+        <button type="button" class="btn-danger" *ngIf="canManage" (click)="deleteTask()">Sil</button>
+      </div>
+    </header>
+
+    <p class="detail-error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+    <div class="detail-body">
+
+      <!-- SOL: içerik -->
+      <main class="detail-main">
+        <input
+          class="title-input"
+          [value]="t.title"
+          [readonly]="!canManage"
+          (blur)="onTitleBlur($any($event.target).value)"
+          aria-label="Görev başlığı" />
+
+        <div class="status-switch" role="group" aria-label="Görev durumu">
+          <button
+            type="button"
+            *ngFor="let s of statuses"
+            class="status-option"
+            [class.active]="t.status === s.key"
+            [disabled]="!canEditStatus"
+            (click)="changeStatus(s.key)">{{ s.label }}</button>
+          <span class="saving" *ngIf="savingField === 'status'">kaydediliyor…</span>
+        </div>
+
+        <section class="block">
+          <h3>Açıklama</h3>
+          <textarea
+            class="desc-input"
+            rows="4"
+            [value]="t.description || ''"
+            [readonly]="!canManage"
+            placeholder="Bu görev hakkında bilinmesi gerekenler…"
+            (blur)="updateField('description', $any($event.target).value)"></textarea>
+        </section>
+
+        <!-- Kontrol listesi -->
+        <section class="block">
+          <div class="block-head">
+            <h3>Kontrol listesi</h3>
+            <span class="progress-text" *ngIf="checklist.length > 0">{{ checklistDone }} / {{ checklist.length }}</span>
+          </div>
+
+          <div class="check-progress" *ngIf="checklist.length > 0">
+            <i [style.width.%]="checklistPercent"></i>
+          </div>
+
+          <ul class="check-list">
+            <li *ngFor="let item of checklist" [class.done]="item.isDone">
+              <label>
+                <input type="checkbox" [checked]="item.isDone" [disabled]="!canEditStatus" (change)="toggleChecklistItem(item)" />
+                <span>{{ item.text }}</span>
+              </label>
+              <button type="button" class="row-remove" *ngIf="canEditChecklist" (click)="deleteChecklistItem(item)" aria-label="Adımı sil">×</button>
+            </li>
+          </ul>
+
+          <p class="empty-hint" *ngIf="checklist.length === 0">Henüz adım eklenmemiş.</p>
+
+          <div class="add-row" *ngIf="canEditChecklist">
+            <input
+              [(ngModel)]="newChecklistText"
+              placeholder="Yeni adım ekle…"
+              (keyup.enter)="addChecklistItem()" />
+            <button type="button" (click)="addChecklistItem()" [disabled]="!newChecklistText.trim()">Ekle</button>
+          </div>
+        </section>
+
+        <!-- Dosya ekleri -->
+        <section class="block">
+          <div class="block-head">
+            <h3>Dosyalar</h3>
+            <label class="upload-btn">
+              <input type="file" (change)="onFileSelected($event)" [disabled]="uploading" hidden />
+              {{ uploading ? 'Yükleniyor…' : '+ Dosya ekle' }}
+            </label>
+          </div>
+
+          <ul class="file-list">
+            <li *ngFor="let a of attachments">
+              <button type="button" class="file-thumb" *ngIf="isImage(a) && previewUrl(a)"
+                      (click)="downloadAttachment(a)" [attr.aria-label]="a.fileName + ' dosyasını indir'">
+                <img [src]="previewUrl(a)" [alt]="a.fileName" />
+              </button>
+              <span class="file-thumb file-icon" *ngIf="!isImage(a) || !previewUrl(a)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+              </span>
+              <div class="file-info">
+                <!-- Bağlantı değil buton: dosyalar yetkili uçtan geldiği için tarayıcının
+                     kendi isteği (Authorization başlığı taşımaz) 401 alırdı. -->
+                <button type="button" class="file-name" (click)="downloadAttachment(a)" [disabled]="downloadingId === a.id">
+                  {{ a.fileName }}{{ downloadingId === a.id ? ' — indiriliyor…' : '' }}
+                </button>
+                <span class="file-meta">{{ fileSize(a.sizeBytes) }} · {{ a.userFullName || 'Bilinmeyen' }} · {{ relativeTime(a.createdAt) }}</span>
+              </div>
+              <button type="button" class="row-remove" *ngIf="canDeleteAttachment(a)" (click)="deleteAttachment(a)" aria-label="Dosyayı sil">×</button>
+            </li>
+          </ul>
+
+          <p class="empty-hint" *ngIf="attachments.length === 0">Henüz dosya eklenmemiş.</p>
+        </section>
+
+        <!-- Yorumlar / Geçmiş -->
+        <section class="block">
+          <div class="tabs">
+            <button type="button" [class.active]="activeTab === 'comments'" (click)="activeTab = 'comments'">
+              Yorumlar <span class="tab-count">{{ comments.length }}</span>
+            </button>
+            <button type="button" [class.active]="activeTab === 'activity'" (click)="activeTab = 'activity'">
+              Geçmiş <span class="tab-count">{{ activities.length }}</span>
+            </button>
+          </div>
+
+          <!-- Yorumlar -->
+          <div *ngIf="activeTab === 'comments'">
+            <ul class="comment-list">
+              <li *ngFor="let c of comments">
+                <span class="c-avatar">
+                  <img *ngIf="avatarUrl(c.userAvatarUrl) as src" [src]="src" alt="" />
+                  <span *ngIf="!avatarUrl(c.userAvatarUrl)" class="c-fallback" [style.background]="avatarColor(c.userId)">{{ initials(c.userFullName) }}</span>
+                </span>
+                <div class="c-body">
+                  <div class="c-meta">
+                    <b>{{ c.userFullName }}</b>
+                    <span>{{ relativeTime(c.createdAt) }}</span>
+                    <button type="button" class="row-remove" *ngIf="canDeleteComment(c)" [disabled]="deletingCommentId === c.id" (click)="deleteComment(c)" aria-label="Yorumu sil">×</button>
+                  </div>
+                  <p>{{ c.content }}</p>
+                </div>
+              </li>
+            </ul>
+
+            <p class="empty-hint" *ngIf="comments.length === 0">Henüz yorum yok.</p>
+
+            <div class="comment-form">
+              <textarea [(ngModel)]="newComment" rows="2" placeholder="Yorum yaz…"></textarea>
+              <button type="button" (click)="addComment()" [disabled]="postingComment || !newComment.trim()">
+                {{ postingComment ? 'Gönderiliyor…' : 'Gönder' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Geçmiş -->
+          <div *ngIf="activeTab === 'activity'">
+            <ul class="activity-list">
+              <li *ngFor="let a of activities">
+                <span class="a-icon">{{ activityIcon(a.activityType) }}</span>
+                <div class="a-body">
+                  <p><b>{{ a.userFullName || 'Silinmiş kullanıcı' }}</b> {{ a.detail }}</p>
+                  <span class="a-time">{{ relativeTime(a.createdAt) }}</span>
+                </div>
+              </li>
+            </ul>
+            <p class="empty-hint" *ngIf="activities.length === 0">Henüz kayıt yok.</p>
+          </div>
+        </section>
+      </main>
+
+      <!-- SAĞ: alanlar -->
+      <aside class="detail-side">
+        <div class="field">
+          <label>Durum</label>
+          <span class="value-pill" [class.done-pill]="t.status === 'done'">{{ statusLabel(t.status) }}</span>
+        </div>
+
+        <div class="field">
+          <label for="f-priority">Öncelik</label>
+          <select id="f-priority" [value]="t.priority" [disabled]="!canManage" (change)="updateField('priority', $any($event.target).value)">
+            <option *ngFor="let p of priorities" [value]="p.key">{{ p.label }}</option>
+          </select>
+          <span class="pri-preview"
+                [style.background]="priorityStyle(t.priority).bg"
+                [style.color]="priorityStyle(t.priority).fg">
+            <i [style.background]="priorityStyle(t.priority).dot"></i>{{ priorityLabel(t.priority) }}
+          </span>
+        </div>
+
+        <div class="field">
+          <label for="f-assignee">Atanan kişi</label>
+          <select id="f-assignee" [value]="t.assignedToId ?? ''" [disabled]="!canManage"
+                  (change)="updateField('assignedToId', $any($event.target).value ? +$any($event.target).value : null)">
+            <option value="">Atanmamış</option>
+            <option *ngFor="let m of members" [value]="m.id">{{ m.fullName }}</option>
+          </select>
+          <div class="assignee-preview" *ngIf="t.assignedToId != null">
+            <span class="c-avatar small">
+              <img *ngIf="memberAvatar(t.assignedToId) as src" [src]="src" alt="" />
+              <span *ngIf="!memberAvatar(t.assignedToId)" class="c-fallback" [style.background]="avatarColor(t.assignedToId)">{{ initials(t.assignedToFullName) }}</span>
+            </span>
+            <span>{{ t.assignedToFullName }}</span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="f-project">Proje</label>
+          <select id="f-project" [value]="t.projectId" [disabled]="!canManage" (change)="updateField('projectId', +$any($event.target).value)">
+            <option *ngFor="let p of projects" [value]="p.id">{{ p.name }}</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="f-due">Bitiş tarihi</label>
+          <input id="f-due" type="date" [value]="dueDateInput" [disabled]="!canManage" (change)="onDueDateChange($any($event.target).value)" />
+        </div>
+
+        <div class="field" *ngIf="t.completedAt">
+          <label>Tamamlanma</label>
+          <span class="value-muted">{{ relativeTime(t.completedAt) }}</span>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,20 @@
+# --- .NET ---
+bin/
+obj/
+.vs/
+*.user
+*.suo
+
+# --- Yerelde yüklenen dosyalar (sunucuya gitmemeli) ---
+GorevTakipApi/App_Data/
+GorevTakipApi/wwwroot/avatars/
+
+# --- Angular ---
+node_modules/
+dist/
+.angular/
+.nx/
+
+# --- Ortam / gizli bilgiler ---
+.env
+*.env.local

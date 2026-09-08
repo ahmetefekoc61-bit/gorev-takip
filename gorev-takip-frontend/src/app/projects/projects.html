@@ -1,0 +1,53 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Projeler</h1>
+      <p class="page-subtitle">Ekibinize ait tüm projeler.</p>
+    </div>
+
+    <form *ngIf="canCreate" class="new-project-form" (ngSubmit)="createProject()">
+      <input
+        type="text"
+        [(ngModel)]="newProjectName"
+        name="newProjectName"
+        placeholder="Yeni proje adı"
+        [disabled]="creating"
+      />
+      <select
+        *ngIf="authService.isAdmin()"
+        [(ngModel)]="newProjectTeamId"
+        name="newProjectTeamId"
+        [disabled]="creating"
+      >
+        <option *ngFor="let t of teams" [ngValue]="t.id">{{ t.name }}</option>
+      </select>
+      <button type="submit" [disabled]="creating || !newProjectName.trim()">
+        {{ creating ? 'Ekleniyor...' : '+ Proje Ekle' }}
+      </button>
+    </form>
+  </div>
+
+  <p class="banner error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span>
+    <span>Yükleniyor...</span>
+  </div>
+
+  <div class="projects-grid" *ngIf="!loading">
+    <a class="project-card" *ngFor="let p of filteredProjects" [routerLink]="['/projects', p.id]">
+      <div class="project-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+        </svg>
+      </div>
+      <div class="project-info">
+        <h3>{{ p.name }}</h3>
+        <span class="project-team">{{ p.teamName }}</span>
+      </div>
+    </a>
+
+    <p class="empty-note" *ngIf="projects.length === 0">Henüz proje yok.</p>
+    <p class="empty-note" *ngIf="projects.length > 0 && filteredProjects.length === 0">Aramanla eşleşen proje bulunamadı.</p>
+  </div>
+</div>

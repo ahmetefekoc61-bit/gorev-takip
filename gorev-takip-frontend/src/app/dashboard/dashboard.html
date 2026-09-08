@@ -1,0 +1,121 @@
+<div class="page">
+  <div class="page-header">
+    <div>
+      <h1>Dashboard</h1>
+      <p class="page-subtitle">Görevlerin ve projelerin genel durumu.</p>
+    </div>
+  </div>
+
+  <div class="loading-state" *ngIf="loading">
+    <span class="spinner"></span>
+    <span>Yükleniyor...</span>
+  </div>
+
+  <p class="banner error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+  <ng-container *ngIf="!loading">
+    <div class="stat-row">
+      <div class="stat-tile">
+        <span class="stat-tile-value">{{ totalProjects }}</span>
+        <span class="stat-tile-label">Toplam Proje</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-value">{{ totalTasks }}</span>
+        <span class="stat-tile-label">Toplam Görev</span>
+      </div>
+      <div class="stat-tile">
+        <span class="stat-tile-value">%{{ completionRate }}</span>
+        <span class="stat-tile-label">Tamamlanma</span>
+      </div>
+      <div class="stat-tile" [class.warn]="overdueCount > 0">
+        <span class="stat-tile-value">{{ overdueCount }}</span>
+        <span class="stat-tile-label">Geciken Görev</span>
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-card">
+        <h2 class="chart-title">Durum Dağılımı</h2>
+        <div class="donut-panel">
+          <div class="donut-wrap">
+            <svg viewBox="0 0 100 100" class="donut">
+              <circle cx="50" cy="50" r="45" fill="none" stroke="#eef0f4" stroke-width="10"></circle>
+              <circle
+                *ngFor="let seg of statusSegments"
+                cx="50" cy="50" r="45" fill="none" stroke-width="10"
+                [attr.stroke]="seg.color"
+                [attr.stroke-dasharray]="dashArray(seg.pct)"
+                [attr.stroke-dashoffset]="dashOffset(seg.offset)"
+                transform="rotate(-90 50 50)"
+              ></circle>
+            </svg>
+            <div class="donut-center">
+              <span class="donut-value">{{ totalTasks }}</span>
+              <span class="donut-label">Görev</span>
+            </div>
+          </div>
+
+          <ul class="legend">
+            <li *ngFor="let seg of statusSegments">
+              <span class="legend-dot" [style.background]="seg.color"></span>
+              <span class="legend-label">{{ seg.label }}</span>
+              <span class="legend-count">{{ seg.count }}</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h2 class="chart-title">Öncelik Dağılımı</h2>
+        <div class="bar-list">
+          <div class="bar-row" *ngFor="let p of priorityBars">
+            <span class="bar-label">{{ p.label }}</span>
+            <div class="bar-track">
+              <div class="bar-fill" [style.width.%]="p.pct" [style.background]="p.color"></div>
+            </div>
+            <span class="bar-count">{{ p.count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Kişi bazında iş yükü: ekip liderinin "kim neyle meşgul" sorusunun cevabı -->
+    <div class="chart-card" *ngIf="workloadStats.length > 0">
+      <h2 class="chart-title">
+        Kişi Bazında İş Yükü
+        <span class="unassigned-note" *ngIf="unassignedOpenCount > 0">
+          {{ unassignedOpenCount }} iş kimseye atanmamış
+        </span>
+      </h2>
+      <div class="workload-list">
+        <div class="workload-row" *ngFor="let w of workloadStats">
+          <span class="w-avatar">
+            <img *ngIf="avatarUrl(w.avatarUrl) as src" [src]="src" alt="" />
+            <span *ngIf="!avatarUrl(w.avatarUrl)" class="w-fallback" [style.background]="avatarColor(w.userId)">{{ initials(w.fullName) }}</span>
+          </span>
+          <span class="w-name">{{ w.fullName }}</span>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="w.pct" style="background: linear-gradient(135deg, #6366f1, #7c3aed);"></div>
+          </div>
+          <span class="w-counts">
+            <b>{{ w.open }}</b> açık
+            <span class="w-overdue" *ngIf="w.overdue > 0">· {{ w.overdue }} geciken</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card" *ngIf="authService.isAdmin() && teamStats.length > 0">
+      <h2 class="chart-title">Ekiplere Göre Tamamlanma</h2>
+      <div class="bar-list">
+        <div class="bar-row" *ngFor="let t of teamStats">
+          <span class="bar-label">{{ t.teamName }}</span>
+          <div class="bar-track">
+            <div class="bar-fill" [style.width.%]="t.rate" style="background: linear-gradient(135deg, #6366f1, #7c3aed);"></div>
+          </div>
+          <span class="bar-count">%{{ t.rate }} ({{ t.done }}/{{ t.total }})</span>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

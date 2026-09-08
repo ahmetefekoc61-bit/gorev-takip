@@ -1,0 +1,163 @@
+<div class="modal-backdrop" (click)="cancel()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>
+        {{ isEditMode ? (readOnly ? 'Görev Detayı' : 'Görevi Düzenle') : 'Yeni Görev' }}
+      </h2>
+      <button type="button" class="icon-btn" (click)="cancel()" aria-label="Kapat">✕</button>
+    </div>
+
+    <div class="modal-body" *ngIf="loadingLists">
+      <div class="loading-row">
+        <span class="spinner"></span>
+        <span>Yükleniyor...</span>
+      </div>
+    </div>
+
+    <form class="modal-body" *ngIf="!loadingLists" (ngSubmit)="save()">
+      <p class="readonly-hint" *ngIf="readOnly">Bu görev sana atanmadığı için sadece görüntüleyebilirsin.</p>
+      <p class="readonly-hint" *ngIf="canEditStatusOnly">Bu görev sana atanmış - sadece durumunu değiştirebilirsin.</p>
+
+      <label>Başlık</label>
+      <input
+        type="text"
+        [(ngModel)]="title"
+        name="title"
+        required
+        placeholder="Görev başlığı"
+        [disabled]="otherFieldsDisabled"
+      />
+
+      <label>Açıklama</label>
+      <textarea
+        [(ngModel)]="description"
+        name="description"
+        rows="3"
+        placeholder="İsteğe bağlı açıklama"
+        [disabled]="otherFieldsDisabled"
+      ></textarea>
+
+      <div class="field-row">
+        <div class="field-col">
+          <label>Durum</label>
+          <select [(ngModel)]="status" name="status" [disabled]="statusDisabled">
+            <option value="todo">Yapılacak</option>
+            <option value="in_progress">Devam Ediyor</option>
+            <option value="done">Tamamlandı</option>
+          </select>
+        </div>
+
+        <div class="field-col">
+          <label>Öncelik</label>
+          <select [(ngModel)]="priority" name="priority" [disabled]="otherFieldsDisabled">
+            <option *ngFor="let p of priorityOptions" [value]="p.value">{{ p.label }}</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-col">
+          <label>Proje</label>
+          <select [(ngModel)]="projectId" name="projectId" [disabled]="otherFieldsDisabled">
+            <option [ngValue]="null" disabled>Proje seçin</option>
+            <option *ngFor="let p of projects" [ngValue]="p.id">{{ p.name }}</option>
+          </select>
+        </div>
+
+        <div class="field-col">
+          <label>Bitiş Tarihi</label>
+          <input type="date" [(ngModel)]="dueDate" name="dueDate" [disabled]="otherFieldsDisabled" />
+        </div>
+      </div>
+
+      <label>Atanan Kişi</label>
+      <select [(ngModel)]="assignedToId" name="assignedToId" [disabled]="otherFieldsDisabled">
+        <option [ngValue]="null">Atanmamış</option>
+        <option *ngFor="let u of users" [ngValue]="u.id">{{ u.fullName }}</option>
+      </select>
+
+      <p class="empty-hint" *ngIf="projects.length === 0">
+        Henüz hiç proje yok. Görev oluşturabilmek için önce en az bir proje eklenmesi gerekiyor.
+      </p>
+
+      <p class="error" *ngIf="errorMessage">{{ errorMessage }}</p>
+
+      <div class="comments-section" *ngIf="isEditMode">
+        <label>Yorumlar</label>
+
+        <div class="loading-row small" *ngIf="loadingComments">
+          <span class="spinner"></span>
+          <span>Yorumlar yükleniyor...</span>
+        </div>
+
+        <ul class="comment-list" *ngIf="!loadingComments">
+          <li class="comment-row" *ngFor="let c of comments">
+            <img *ngIf="commentAvatarUrl(c) as src" [src]="src" class="comment-avatar-img" alt="" />
+            <span *ngIf="!commentAvatarUrl(c)" class="comment-avatar">{{ commentInitials(c.userFullName) }}</span>
+            <div class="comment-body">
+              <div class="comment-meta">
+                <span class="comment-author">{{ c.userFullName }}</span>
+                <span class="comment-date">{{ c.createdAt | date:'d MMM, HH:mm' }}</span>
+                <button
+                  type="button"
+                  class="comment-delete-btn"
+                  *ngIf="canDeleteComment(c)"
+                  [disabled]="deletingCommentId === c.id"
+                  (click)="deleteComment(c)"
+                  aria-label="Yorumu sil"
+                >&times;</button>
+              </div>
+              <p class="comment-content">{{ c.content }}</p>
+            </div>
+          </li>
+          <p class="empty-hint comment-empty" *ngIf="comments.length === 0 && !commentsFailed">Henüz yorum yok.</p>
+          <p class="empty-hint comment-empty" *ngIf="commentsFailed">Yorumlar yüklenemedi.</p>
+        </ul>
+
+        <div class="comment-form">
+          <textarea
+            [(ngModel)]="newComment"
+            name="newComment"
+            rows="2"
+            placeholder="Bir yorum yaz..."
+            [disabled]="postingComment"
+          ></textarea>
+          <button
+            type="button"
+            class="ghost-btn comment-submit-btn"
+            [disabled]="postingComment || !newComment.trim()"
+            (click)="addComment()"
+          >
+            {{ postingComment ? 'Gönderiliyor...' : 'Yorum Yap' }}
+          </button>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="delete-btn"
+          *ngIf="showDeleteButton"
+          (click)="deleteTask()"
+          [disabled]="saving || deleting"
+        >
+          {{ deleting ? 'Siliniyor...' : 'Sil' }}
+        </button>
+
+        <div class="footer-actions">
+          <button type="button" class="ghost-btn" (click)="cancel()" [disabled]="saving || deleting">
+            {{ showSaveButton ? 'Vazgeç' : 'Kapat' }}
+          </button>
+          <button
+            type="submit"
+            class="primary-btn"
+            *ngIf="showSaveButton"
+            [disabled]="saving || deleting || projects.length === 0"
+          >
+            {{ saving ? 'Kaydediliyor...' : (isEditMode ? 'Kaydet' : 'Görevi Oluştur') }}
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
