@@ -1,0 +1,20 @@
+{
+  "_aciklama": [
+    "Bu dosyayi 'appsettings.Development.json' adiyla kopyalayip kendi",
+    "degerlerinizi yazin. Gercek dosya .gitignore'da - depoya girmez.",
+    "Yayin ortaminda bu degerler ortam degiskenlerinden geliyor",
+    "(ConnectionStrings__DefaultConnection, Jwt__Key)."
+  ],
+  "ConnectionStrings": {
+    "DefaultConnection": "Host=localhost;Port=5432;Database=gorevtakip;Username=postgres;Password=YEREL_SIFREN"
+  },
+  "Jwt": {
+    "Key": "en-az-32-karakterlik-rastgele-bir-anahtar-yazin"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}

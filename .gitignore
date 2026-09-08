@@ -15,6 +15,10 @@ dist/
 .angular/
 .nx/
 
-# --- Ortam / gizli bilgiler ---
+# --- Ortam / gizli bilgiler (depoya ASLA girmemeli) ---
 .env
 *.env.local
+GorevTakipApi/appsettings.Development.json
+android/key.properties
+*.jks
+*.keystore
