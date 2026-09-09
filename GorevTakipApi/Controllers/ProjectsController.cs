@@ -41,16 +41,17 @@ public class ProjectsController : ControllerBase
     /// </summary>
     public record ProjectDto(
         int Id, string Name, int TeamId, string? TeamName,
-        int TaskCount, int CompletedTaskCount);
+        int TaskCount, int CompletedTaskCount, DateTime? DueDate);
 
     private static IQueryable<ProjectDto> ToDto(IQueryable<Project> query) =>
         query.Select(p => new ProjectDto(
             p.Id, p.Name, p.TeamId, p.Team!.Name,
             p.Tasks.Count(),
-            p.Tasks.Count(t => t.Status == "done")));
+            p.Tasks.Count(t => t.Status == "done"),
+            p.DueDate));
 
-    public record CreateProjectRequest(string Name, int TeamId);
-    public record UpdateProjectRequest(string Name, int TeamId);
+    public record CreateProjectRequest(string Name, int TeamId, DateTime? DueDate);
+    public record UpdateProjectRequest(string Name, int TeamId, DateTime? DueDate);
 
     private static string? ValidateName(string name)
     {
@@ -116,14 +117,23 @@ public class ProjectsController : ControllerBase
         {
             Name = request.Name.Trim(),
             TeamId = teamId,
+            // Client saat dilimi olmayan bir tarih gönderiyor; Npgsql yalnızca
+            // Kind=Utc kabul ettiği için görevlerdeki ile aynı dönüşümden geçiyor.
+            DueDate = request.DueDate.ToUtcSafe(),
             CreatedAt = DateTime.UtcNow
         };
 
         _context.Projects.Add(project);
 
+        // Ekibin tamamı haberdar olsun; projeyi açan kişi kendi işlemi için
+        // bildirim almıyor.
+        var dueText = project.DueDate == null
+            ? string.Empty
+            : $" Bitiş tarihi: {project.DueDate.Value:dd.MM.yyyy}.";
+
         await _notificationService.QueueTeamAsync(
             teamId,
-            $"\"{project.Name}\" adlı yeni bir proje ekibinize eklendi.",
+            $"\"{project.Name}\" adlı yeni bir proje ekibinize eklendi.{dueText}",
             excludeUserId: User.GetUserId());
 
         await _context.SaveChangesAsync();
@@ -160,6 +170,7 @@ public class ProjectsController : ControllerBase
 
         existing.Name = request.Name.Trim();
         existing.TeamId = newTeamId;
+        existing.DueDate = request.DueDate.ToUtcSafe();
         existing.ModifiedAt = DateTime.UtcNow;
 
         if (newTeamId == previousTeamId)

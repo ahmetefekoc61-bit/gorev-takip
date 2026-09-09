@@ -22,13 +22,15 @@ public class UsersController : ControllerBase
     private readonly AppDbContext _context;
     private readonly ITaskActivityService _activityService;
     private readonly IFileStorage _storage;
+    private readonly INotificationService _notificationService;
 
     public UsersController(AppDbContext context, ITaskActivityService activityService,
-        IFileStorage storage)
+        IFileStorage storage, INotificationService notificationService)
     {
         _context = context;
         _activityService = activityService;
         _storage = storage;
+        _notificationService = notificationService;
     }
 
     private bool IsTeamLeader => User.GetRole() == Role.TeamLeader;
@@ -208,6 +210,7 @@ public class UsersController : ControllerBase
         if (existing == null) return NotFound();
 
         var previousTeamId = existing.TeamId;
+        var previousRole = existing.Role;
 
         // Role bir enum (değer tipi) olduğu için model doğrulaması aralık kontrolü yapmıyor;
         // gövdeye "role": 99 yazıldığında bu değer olduğu gibi veritabanına gidiyor ve
@@ -256,6 +259,12 @@ public class UsersController : ControllerBase
         }
 
         existing.ModifiedAt = DateTime.UtcNow;
+
+        // Kullanıcının kendisi haberdar olsun: önceden rolü ya da ekibi değişen kişi
+        // bunu ancak uygulamada bir şeyler yapamadığında fark ediyordu. Bildirim
+        // burada yalnızca kuyruğa giriyor, aşağıdaki SaveChangesAsync ile asıl
+        // değişiklikle birlikte tek işlemde yazılıyor.
+        await QueueMembershipNoticeAsync(existing, previousTeamId, previousRole);
 
         var currentTeamId = existing.TeamId;
 
@@ -315,6 +324,60 @@ public class UsersController : ControllerBase
         await transaction.CommitAsync();
 
         return NoContent();
+    }
+
+    private static string RoleLabel(Role role) => role switch
+    {
+        Role.Admin => "Yönetici",
+        Role.TeamLeader => "Ekip Lideri",
+        _ => "Ekip Üyesi"
+    };
+
+    /// <summary>
+    /// Rol veya ekip değiştiğinde kullanıcının kendisine bildirim bırakır. Mesajda
+    /// hangi ekip ve hangi sıfat olduğu açıkça yazıyor: "ekibe eklendiniz" tek başına
+    /// kullanıcının yetkisinin ne olduğunu söylemiyordu.
+    /// </summary>
+    private async Task QueueMembershipNoticeAsync(User user, int? previousTeamId, Role previousRole)
+    {
+        var teamChanged = user.TeamId != previousTeamId;
+        var roleChanged = user.Role != previousRole;
+        if (!teamChanged && !roleChanged) return;
+
+        // Kendi hesabını düzenleyen yöneticiye kendi işlemini bildirmiyoruz.
+        if (user.Id == User.GetUserId()) return;
+
+        var roleLabel = RoleLabel(user.Role);
+        string message;
+
+        if (teamChanged && user.TeamId != null)
+        {
+            var teamName = await _context.Teams
+                .AsNoTracking()
+                .Where(t => t.Id == user.TeamId)
+                .Select(t => t.Name)
+                .FirstOrDefaultAsync();
+
+            message = $"\"{teamName}\" ekibine {roleLabel} olarak eklendiniz.";
+        }
+        else if (teamChanged)
+        {
+            var previousName = await _context.Teams
+                .AsNoTracking()
+                .Where(t => t.Id == previousTeamId)
+                .Select(t => t.Name)
+                .FirstOrDefaultAsync();
+
+            message = previousName == null
+                ? "Ekipten çıkarıldınız."
+                : $"\"{previousName}\" ekibinden çıkarıldınız.";
+        }
+        else
+        {
+            message = $"Rolünüz \"{roleLabel}\" olarak güncellendi.";
+        }
+
+        _notificationService.Queue(user.Id, message);
     }
 
     private static readonly string[] AllowedAvatarExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
